@@ -24,6 +24,14 @@ namespace Constellation {
             return false;
         }
 
+        public bool IsCloseEditor() {
+            return false;
+        }
+
+        public bool IsReportable() {
+            return false;
+        }
+
         public int GetID () {
             return id;
         }

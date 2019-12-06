@@ -1,5 +1,11 @@
 namespace Constellation.Unity {
     public class UnityNodeFactory : INodeGetter {
+
+        public string GetNameSpace()
+        {
+            return NameSpace.NAME;
+        }
+
         public Node<INode> GetNode (string nodeName) {
             switch (nodeName) {
                 case DeltaTime.NAME:
@@ -65,6 +71,9 @@ namespace Constellation.Unity {
                 case MaterialColor.NAME:
                     INode materialColor = new MaterialColor()  as INode;
                     return new Node<INode> (materialColor);
+                case Quit.NAME:
+                    INode quit = new Quit() as INode;
+                    return new Node<INode> (quit);
                 default:
                     return null;
             }

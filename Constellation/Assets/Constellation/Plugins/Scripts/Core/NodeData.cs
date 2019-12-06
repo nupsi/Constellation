@@ -5,6 +5,7 @@ namespace Constellation {
     public class NodeData {
         public string Name;
         public string Namespace;
+        public string OverrideDisplayedName = "";
         public string Guid;
         public float XPosition;
         public float YPosition;
@@ -38,6 +39,39 @@ namespace Constellation {
             Name = _node.Name;
             Namespace = _node.Namespace;
             Guid = _node.GetGuid ();
+        }
+
+        public NodeData(Node<INode> _node, ConstellationScript ConstellationNode)
+        {
+            AttributesData = new List<AttributeData>();
+            Inputs = new List<InputData>();
+            Outputs = new List<OutputData>();
+
+            foreach (Input input in _node.GetInputs())
+            {
+                Inputs.Add(new InputData(input.Guid, input.isWarm, input.Type, input.Description));
+            }
+
+            foreach (Output output in _node.GetOutputs())
+            {
+                Outputs.Add(new OutputData(output.Guid, output.IsWarm, output.Type, output.Description));
+            }
+
+            foreach (Attribute attribute in _node.GetAttributes())
+            {
+                AttributesData.Add(new AttributeData(attribute.Type, attribute.Value));
+            }
+
+            if (_node.GetGuid() == null)
+            {
+                _node.Initialize(System.Guid.NewGuid().ToString(), _node.Name);
+            }
+
+            XPosition = _node.XPosition;
+            YPosition = _node.YPosition;
+            Name = _node.Name;
+            Namespace = _node.Namespace;
+            Guid = _node.GetGuid();
         }
 
         public NodeData (NodeData _node) {

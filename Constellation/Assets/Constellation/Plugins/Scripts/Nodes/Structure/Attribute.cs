@@ -2,14 +2,19 @@ namespace Constellation {
 
     [System.Serializable]
     public class Attribute {
-        public enum AttributeType { Value, 
+        public delegate void OnAttributeChanged();
+
+        public enum AttributeType {
+            Value, 
             Word, 
             NoteField, 
             Conditionals, Then, Else, 
             ReadOnlyValue, 
             ReadOnlyXValue, ReadOnlyYValue, ReadOnlyZValue, 
-            ReadOnlyValueR, ReadOnlyValueG, ReadOnlyValueB, ReadOnlyValueA
+            ReadOnlyValueR, ReadOnlyValueG, ReadOnlyValueB, ReadOnlyValueA,
+            RenameNodeTitle
         };
+
         public Variable Value;
         public AttributeType Type;
 
