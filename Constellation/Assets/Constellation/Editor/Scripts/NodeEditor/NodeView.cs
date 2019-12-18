@@ -1,7 +1,6 @@
 using Constellation;
 using UnityEditor;
 using UnityEngine;
-using System.Collections.Generic;
 
 namespace ConstellationEditor {
     public class NodeView {
@@ -22,26 +21,26 @@ namespace ConstellationEditor {
         private ILinkEditor linkEditor;
         private IVisibleObject visibleObject;
         private Rect HelpPosition;
-        
+
         public NodeView (NodeData _node, IVisibleObject _visibleObject, NodeConfig _nodeConfig, ConstellationScript _constellation, ILinkEditor _linkEditor) {
             nodeConfig = _nodeConfig;
-            var nodeWidth = nodeConfig.NodeWidth;
-            if (_node.GetAttributes().Length > 0) {
-                nodeWidth = nodeConfig.NodeWidthAsAttributes;
-            }
-
-            Rect = new Rect(_node.XPosition, _node.YPosition, nodeWidth, (Mathf.Max(Mathf.Max(_node.Inputs.Count, _node.Outputs.Count), _node.AttributesData.Count) * nodeConfig.InputSize) + nodeConfig.TopMargin);
+            var connections = Mathf.Max(_node.Inputs.Count, _node.Outputs.Count);
+            Rect = new Rect {
+                x = _node.XPosition,
+                y = _node.YPosition,
+                width = nodeConfig.GetNodeWidth(_node),
+                height = (Mathf.Max(connections,  _node.AttributesData.Count) * nodeConfig.InputSize) + nodeConfig.TopMargin,
+            };
             node = _node;
             visibleObject = _visibleObject;
             constellationScript = _constellation;
             linkEditor = _linkEditor;
 
-            
             foreach (var attribute in node.AttributesData) {
                 attribute.Value = AttributeStyleFactory.Reset(attribute.Type, attribute.Value);
             }
         }
-        
+
         public void DrawWindow (int id, GUI.WindowFunction DrawNodeWindow, bool isNote) {
             //Only draw visible nodes
             if (Event.current.isMouse)
@@ -61,7 +60,7 @@ namespace ConstellationEditor {
                 var nodeStyle = selected ? nodeConfig.NodeHoverStyle : nodeConfig.NodeStyle;
                 Rect = GUI.Window(id, Rect, DrawNodeWindow, "", nodeStyle);
             }
-            
+
             if (node.XPosition != Rect.x || node.YPosition != Rect.y) {
                 nodeMovement = new Vector2(node.XPosition - Rect.x, node.YPosition - Rect.y);
                 nodeMoved = true;
@@ -69,7 +68,7 @@ namespace ConstellationEditor {
                 nodeMovement = Vector2.zero;
                 nodeMoved = false;
             }
-            
+
             node.XPosition = Rect.x;
             node.YPosition = Rect.y;
         }
@@ -114,7 +113,7 @@ namespace ConstellationEditor {
             Event current = Event.current;
             var style = nodeConfig.Tooltip;
             GUI.Label(new Rect(HelpPosition.x, HelpPosition.y, style.CalcSize(new GUIContent(text)).x, 30), text, style);
-            if (CloseOnNextFrame == true) {
+            if (CloseOnNextFrame) {
                 DrawDescription = false;
                 CloseOnNextFrame = false;
             }
@@ -185,12 +184,10 @@ namespace ConstellationEditor {
                         Description = input.Description;
                         HelpPosition = new Rect(node.XPosition + 30, node.YPosition - 30, 0, 0);
                     }
-                    if (GUI.Button(buttonPosition, "",
-                            nodeConfig.GetConnectionStyle(input.IsWarm, input.Type))) {
-                        
-                        if (current.button == 0)
+                    if (GUI.Button(buttonPosition, "", nodeConfig.GetConnectionStyle(input.IsWarm, input.Type))) {
+                        if (current.button == 0) {
                             linkEditor.AddLinkFromInput(input);
-                        else {
+                        } else {
                             DrawDescription = true;
                             Description = input.Description;
                         }
@@ -205,15 +202,20 @@ namespace ConstellationEditor {
                 var i = 0;
                 Event current = Event.current;
                 foreach (var output in node.Outputs) {
-                    var buttonPosition = new Rect(Rect.width - nodeConfig.OutputSize, nodeConfig.TopMargin + ((nodeConfig.OutputSize) * i), nodeConfig.OutputSize, nodeConfig.OutputSize * 0.75f);
-                    if (buttonPosition.Contains(current.mousePosition))
-                    {
+                    var position = new Rect {
+                        x = Rect.width - nodeConfig.OutputSize,
+                        y = nodeConfig.TopMargin + ((nodeConfig.OutputSize) * i),
+                        width = nodeConfig.OutputSize,
+                        height = nodeConfig.OutputSize * 0.75f
+                    };
+
+                    if (position.Contains(current.mousePosition)) {
                         DrawDescription = true;
                         Description = output.Description;
                         HelpPosition = new Rect(node.XPosition + 30 + nodeConfig.NodeWidth, node.YPosition - 30, 0, 0);
                     }
-                    if (GUI.Button(buttonPosition, "",
-                            nodeConfig.GetConnectionStyle(output.IsWarm, output.Type))) {
+
+                    if (GUI.Button(position, "", nodeConfig.GetConnectionStyle(output.IsWarm, output.Type))) {
                         if (current.button == 0){
                             linkEditor.AddLinkFromOutput(output);
                         }
@@ -242,16 +244,14 @@ namespace ConstellationEditor {
                     onHelpClicked(node.Name);
                 }
             }
-            if (node.OverrideDisplayedName.Length == 0)
-            {
+
+            if (node.OverrideDisplayedName.Length == 0) {
                 GUI.Label(new Rect(10, 0, width, 16), node.Name, nodeConfig.HeaderLabel);
-            }
-            else
-            {
+            } else {
                 GUI.Label(new Rect(10, 0, width, 16), node.OverrideDisplayedName, nodeConfig.HeaderLabel);
             }
         }
-        
+
         public NodeData GetData () {
             return node;
         }

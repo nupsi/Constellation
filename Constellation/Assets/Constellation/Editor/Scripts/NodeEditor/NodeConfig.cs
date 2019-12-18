@@ -1,3 +1,4 @@
+using Constellation;
 using UnityEditor;
 using UnityEngine;
 
@@ -79,6 +80,10 @@ namespace ConstellationEditor {
                 else
                     return ColdInputColor;
             }
+        }
+
+        public float GetNodeWidth(NodeData _node) {
+            return _node.GetAttributes().Length > 0 ? NodeWidthAsAttributes : NodeWidth;
         }
 
         public GUIStyle HelpStyle {

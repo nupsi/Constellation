@@ -28,100 +28,36 @@ namespace ConstellationEditor
 
         public void DrawLinks()
         {
-
-            foreach (LinkData link in constellationScript.GetLinks())
+            foreach(var link in constellationScript.GetLinks())
             {
-                Rect startLink = Rect.zero;
-                Rect endLink = Rect.zero;
-                foreach (NodeData node in constellationScript.GetNodes())
-                {
-                    var i = 1;
-                    foreach (InputData input in node.GetInputs())
-                    {
-                        if (link.Input.Guid == input.Guid)
-                        {
-                            endLink = new Rect(node.XPosition,
-                                node.YPosition + (nodeConfig.TopMargin * 0.5f) + ((nodeConfig.InputSize) * i),
-                                0,
-                                0);
-                            break;
-                        }
-                        i++;
-                    }
+                var output = OutputPosition(link.Output);
+                var input = InputPosition(link.Input);
 
-                    var j = 1;
-                    foreach (OutputData output in node.GetOutputs())
-                    {
-                        if (link.Output.Guid == output.Guid)
-                        {
-                            var width = nodeConfig.NodeWidth;
-                            if (node.GetAttributes().Length > 0)
-                            {
-                                width = nodeConfig.NodeWidthAsAttributes;
-                            }
-
-                            startLink = new Rect(node.XPosition + width,
-                                node.YPosition + (nodeConfig.TopMargin * 0.5f) + ((nodeConfig.InputSize) * j),
-                                0,
-                                0);
-                            break;
-                        }
-                        j++;
-                    }
-                }
-                if (startLink == Rect.zero || endLink == Rect.zero)
+                if(output == Rect.zero || input == Rect.zero)
                 {
                     constellationScript.RemoveLink(link);
                     OnLinkRemoved(link);
                 }
 
-                DrawNodeCurve(startLink, endLink, nodeConfig.GetConnectionColor(link.Input.IsWarm, link.Input.Type));
-
-                if (MouseOverCurve(startLink.position, endLink.position))
-                {
-                    var linkCenter = new Rect((startLink.x + (endLink.x - startLink.x) / 2) - (nodeConfig.TopMargin * 0.5f),
-                        (startLink.y + (endLink.y - startLink.y) / 2) - (nodeConfig.TopMargin * 0.5f),
-                        nodeConfig.LinkButtonSize,
-                        nodeConfig.LinkButtonSize);
-                    GUI.Box(linkCenter, "", nodeConfig.HexagonButton);
-                    GUI.Button(linkCenter, "", nodeConfig.CloseButton);
-
-                    if (Event.current.IsUsed())
-                    {
-                        if (Event.current.button == 0)
-                        {
-                            if (!dragging)
-                            {
-                                dragging = true;
-                                if (linkCenter.Contains(Event.current.mousePosition))
-                                {
-                                    constellationScript.RemoveLink(link);
-                                    OnLinkRemoved(link);
-                                }
-                            }
-                        }
-                    }
-                    else if (!Event.current.IsLayoutOrRepaint())
-                    {
-                        dragging = false;
-                    }
-                }
+                DrawNodeCurve(output, input, nodeConfig.GetConnectionColor(link.Input.IsWarm, link.Input.Type));
+                MouseOverLink(link, output, input);
             }
         }
 
         public Rect InputPosition(InputData _input)
         {
-            foreach (NodeData node in constellationScript.GetNodes())
+            foreach(var node in constellationScript.GetNodes())
             {
                 var i = 1;
-                foreach (InputData input in node.GetInputs())
+                foreach(var input in node.GetInputs())
                 {
-                    if (_input.Guid == input.Guid)
+                    if(_input.Guid == input.Guid)
                     {
-                        return new Rect(node.XPosition,
-                            node.YPosition + (nodeConfig.TopMargin * 0.5f) + ((nodeConfig.InputSize) * i),
-                            0,
-                            0);
+                        return new Rect
+                        {
+                            x = node.XPosition,
+                            y = node.YPosition + Offset + ((nodeConfig.InputSize) * i)
+                        };
                     }
                     i++;
                 }
@@ -131,17 +67,18 @@ namespace ConstellationEditor
 
         public Rect OutputPosition(OutputData _output)
         {
-            foreach (NodeData node in constellationScript.GetNodes())
+            foreach(var node in constellationScript.GetNodes())
             {
                 var j = 1;
-                foreach (OutputData output in node.GetOutputs())
+                foreach(var output in node.GetOutputs())
                 {
-                    if (_output.Guid == output.Guid)
+                    if(_output.Guid == output.Guid)
                     {
-                        return new Rect(node.XPosition + nodeConfig.NodeWidth,
-                            node.YPosition + (nodeConfig.TopMargin * 0.5f) + ((nodeConfig.InputSize) * j),
-                            0,
-                            0);
+                        return new Rect
+                        {
+                            x = node.XPosition + nodeConfig.GetNodeWidth(node),
+                            y = node.YPosition + Offset + (nodeConfig.InputSize * j)
+                        };
                     }
                     j++;
                 }
@@ -149,63 +86,87 @@ namespace ConstellationEditor
             return Rect.zero;
         }
 
-        public void DrawNodeCurve(Rect start, Rect end)
+        public void DrawNodeCurve(Rect _output, Rect _input)
         {
-            DrawNodeCurve(start, end, Color.gray);
+            DrawNodeCurve(_output, _input, Color.gray);
         }
 
-        public void DrawNodeCurve(Rect start, Rect end, Color color)
+        public void DrawNodeCurve(Rect _ouput, Rect _input, Color _color)
         {
-            Vector3 startPos = new Vector3(start.x + start.width, start.y + start.height / 2, 0);
-            Vector3 endPos = new Vector3(end.x, end.y + end.height / 2, 0);
-
-            if (!editor.InView(PointsToRect(startPos, endPos)))
-                return;
-
-            Vector3 startTan = startPos + Vector3.right * 50;
-            Vector3 endTan = endPos + Vector3.left * 50;
-
-            //Smoother bezier curve for close distance
-            var distance = Vector3.Distance(startPos, endPos);
-            if (distance < 100)
+            var start = new Vector3(_ouput.x + _ouput.width, _ouput.y + (_ouput.height / 2), 0);
+            var end = new Vector3(_input.x, _input.y + (_input.height / 2), 0);
+            if(editor.InView(PointsToRect(start, end)))
             {
-                startTan = startPos + Vector3.right * (distance * 0.5f);
-                endTan = endPos + Vector3.left * (distance * 0.5f);
+                var distance = Vector3.Distance(start, end);
+                var startTan = start + (Vector3.right * distance * 0.5f);
+                var endTan = end + (Vector3.left * distance * 0.5f);
+                Handles.DrawBezier(start, end, startTan, endTan, _color, null, 5);
             }
-
-            Handles.DrawBezier(startPos, endPos, startTan, endTan, color, null, 5);
         }
 
-        public bool MouseOverCurve(Vector3 start, Vector3 end)
+        private void MouseOverLink(LinkData _link, Rect _output, Rect _input)
+        {
+            if(MouseOverCurve(_output.position, _input.position))
+            {
+                var linkCenter = new Rect
+                {
+                    x = (_output.x + ((_input.x - _output.x) / 2)) - Offset,
+                    y = (_output.y + ((_input.y - _output.y) / 2)) - Offset,
+                    width = nodeConfig.LinkButtonSize,
+                    height = nodeConfig.LinkButtonSize,
+                };
+
+                GUI.Box(linkCenter, "", nodeConfig.HexagonButton);
+                GUI.Button(linkCenter, "", nodeConfig.CloseButton);
+
+                if(Event.current.IsUsed())
+                {
+                    if(Event.current.button == 0 && !dragging)
+                    {
+                        dragging = true;
+                        if(linkCenter.Contains(Event.current.mousePosition))
+                        {
+                            constellationScript.RemoveLink(_link);
+                            OnLinkRemoved(_link);
+                        }
+                    }
+                }
+                else if(!Event.current.IsLayoutOrRepaint())
+                {
+                    dragging = false;
+                }
+            }
+        }
+
+        private bool MouseOverCurve(Vector3 _output, Vector3 _input)
         {
             //Currently creates rect to detect mouse over so it's nowhere near pixel perfect detection
-
             var mouse = Event.current.mousePosition;
-
-            //Padding is needed to recognise straight lines
-            var padding = 10;
-
-            var startXFirst = (start.x < end.x);
-            var startYFirst = (start.y < end.y);
-
-            var mouseOverX = startXFirst ?
-                mouse.x > start.x && mouse.x < end.x : mouse.x > end.x && mouse.x < start.x;
-
-            var mouseOverY = startYFirst ?
-                mouse.y + padding > start.y && mouse.y - padding < end.y : mouse.y + padding > end.y && mouse.y - padding < start.y;
-
-            return (mouseOverX && mouseOverY);
+            return InRange(mouse.x, _output.x, _input.x) && InRange(mouse.y, _output.y, _input.y, 10);
         }
 
-        private Rect PointsToRect(Vector3 start, Vector3 end)
+        private bool InRange(float _value, float _start, float _end, float _padding = 0)
+        {
+            return _value + _padding > Mathf.Min(_start, _end) && _value - _padding < Mathf.Max(_start, _end);
+        }
+
+        private Rect PointsToRect(Vector3 _start, Vector3 _end)
         {
             return new Rect
             {
-                x = (start.x < end.x) ? start.x : end.x,
-                y = (start.y < end.y) ? end.y : start.y,
-                width = Mathf.Abs(start.x - end.x),
-                height = Mathf.Abs(start.y - end.y)
+                x = Mathf.Min(_start.x, _end.x),
+                y = Mathf.Min(_start.y, _end.y),
+                width = Mathf.Abs(_start.x - _end.x),
+                height = Mathf.Abs(_start.y - _end.y)
             };
+        }
+
+        private float Offset
+        {
+            get
+            {
+                return nodeConfig.TopMargin * 0.5f;
+            }
         }
     }
 }
