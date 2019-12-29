@@ -41,7 +41,7 @@ namespace ConstellationEditor {
             }
         }
 
-        public void DrawWindow (int id, GUI.WindowFunction DrawNodeWindow, bool isNote) {
+        public void DrawWindow (int id, GUI.WindowFunction DrawNodeWindow) {
             //Only draw visible nodes
             if (Event.current.isMouse)
             {
@@ -130,14 +130,9 @@ namespace ConstellationEditor {
         }
 
         public void DrawContent (HelpClicked _onHelpClicked) {
-            var current = Event.current;
-
-            //Only draw node on Repaint if it's not selected
-            if (current.IsRepaint())
-                Draw(_onHelpClicked);
-
-            //Draw on multiple events for buttons to work
-            if (selected && !current.IsRepaint())
+            //TODO: Prevents creating connections while multiple nodes are selected,
+            //      since node hover is disabled while multiple nodes are selected.
+            if (Event.current.IsRepaint() || selected)
                 Draw(_onHelpClicked);
         }
 

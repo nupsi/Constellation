@@ -70,7 +70,7 @@ namespace ConstellationEditor {
 
         private void SetNodes () {
             foreach (NodeData nodeData in constellationScript.GetNodes ()) {
-                if (nodeData.Name == "Tutorial") {
+                if (nodeData.Name == Constellation.Tags.Tutorial.NAME) {
                     isTutorial = true;
                 }
                 Nodes.Add (new NodeView (nodeData, visibleObject, nodeConfig, constellationScript, linkEditor));
@@ -78,29 +78,26 @@ namespace ConstellationEditor {
         }
 
         public void DrawEditorNodes (Vector2 editorScrollPos) {
+            if(Nodes != null) {
+                farNodeX = 0;
+                farNodeY = 0;
+                editorWindow.BeginWindows ();
+                var i = 0;
 
-            farNodeX = 0;
-            farNodeY = 0;
-            editorWindow.BeginWindows ();
-            var i = 0;
-            if (Nodes == null)
-                return;
+                if (Event.current.button == 2) {
+                    editorScrollPos -= Event.current.delta * 0.5f;
+                    GUI.RequestRepaint ();
+                }
 
-            if (Event.current.button == 2) {
-                editorScrollPos -= Event.current.delta * 0.5f;
-                GUI.RequestRepaint ();
+                foreach (NodeView node in Nodes) {
+                    if (node != null) {
+                        node.DrawWindow(i++, DrawNodeWindow);
+                        farNodeX = Mathf.Max(node.GetRect().x, farNodeX);
+                        farNodeY = Mathf.Max(node.GetRect().y, farNodeY);
+                    }
+                }
+                editorWindow.EndWindows ();
             }
-
-            foreach (NodeView node in Nodes) {
-                if (node == null)
-                    return;
-
-                node.DrawWindow (i, DrawNodeWindow, false);
-                i++;
-                farNodeX = Mathf.Max (node.GetRect ().x, farNodeX);
-                farNodeY = Mathf.Max (node.GetRect ().y, farNodeY);
-            }
-            editorWindow.EndWindows ();
         }
 
         public NodeView[] GetNodes () {
@@ -159,7 +156,7 @@ namespace ConstellationEditor {
             {
                 newNode.OverrideDisplayedName = _nodeName;
             }
-                newNode.XPosition = editorScrollPos.x + (panelSize.x * 0.5f);
+            newNode.XPosition = editorScrollPos.x + (panelSize.x * 0.5f);
             newNode.YPosition = editorScrollPos.y + (panelSize.y * 0.5f);
             var newNodeWindow = new NodeView (newNode, visibleObject, nodeConfig, constellationScript, linkEditor);
             Nodes.Add (newNodeWindow);
@@ -169,27 +166,25 @@ namespace ConstellationEditor {
             return newNode;
         }
 
-        void HelpRequested (string nodeName) {
+        private void HelpRequested (string nodeName) {
             OnHelpClicked (nodeName);
         }
 
         public void SelectNodes (NodeData[] _nodes) {
-            if (_nodes == null)
-                return;
-            nodeEditorSelection.UnselectAll ();
-            foreach (var nodeData in _nodes) {
-                foreach (var nodeView in Nodes) {
-                    if (nodeData.Guid == nodeView.GetData ().Guid) {
-                        nodeEditorSelection.SelectNode (nodeView);
+            if (_nodes != null) {
+                nodeEditorSelection.UnselectAll();
+                foreach(var nodeData in _nodes) {
+                    foreach(var nodeView in Nodes) {
+                        if(nodeData.Guid == nodeView.GetData().Guid) {
+                            nodeEditorSelection.SelectNode(nodeView);
+                        }
                     }
                 }
             }
         }
 
-        public bool IsTutorial()
-        {
+        public bool IsTutorial() {
             return isTutorial;
         }
-
     }
 }

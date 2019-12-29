@@ -29,14 +29,11 @@ namespace ConstellationEditor {
         public void Draw (NodeView[] nodes, LinkData[] links, Vector2 selectionOffset, Rect window) {
             var current = Event.current;
             var hoverPosition = current.mousePosition + selectionOffset;
-            var viewport = GUILayoutUtility.GetLastRect ();
-
-            DragSelection ();
-
-            if (!current.IsLayout ()) {
-                offset = viewport.position;
+            if(!current.IsLayout()) {
+                offset = GUILayoutUtility.GetLastRect().position;
             }
 
+            DragSelectedNodes ();
             UpdateKeyDown ();
 
             //Special handling for single node. This is to make GUI.DragWindow work correctly
@@ -56,13 +53,10 @@ namespace ConstellationEditor {
                 GUI.RequestRepaint ();
             }
 
-            if (current.mousePosition.x + window.x < window.width 
-                && current.mousePosition.y - window.y < window.height)
-                UpdateSelectionArea (selectionOffset, Event.current, nodes);
-            else {
-                DragSize = Vector2.zero;
-                StartMousePosition = Vector2.zero;
-                DragSize = Vector2.zero;
+            if (current.mousePosition.x + window.x < window.width && current.mousePosition.y - window.y < window.height) {
+                UpdateSelectionArea (selectionOffset, current, nodes);
+            } else {
+                ClearSelectionArea();
             }
 
             //Mouse over
@@ -78,10 +72,9 @@ namespace ConstellationEditor {
 
         private void UpdateKeyDown () {
             var current = Event.current;
-            if (current.type != EventType.KeyDown) return;
-
-            if (current.keyCode == KeyCode.Delete)
-                DestroySelection ();
+            if(current.type == EventType.KeyDown && current.keyCode == KeyCode.Delete) {
+                DestroySelection();
+            }
         }
 
         private void UpdateSelectionArea (Vector2 _offset, Event _event, NodeView[] _nodes) {
@@ -111,28 +104,34 @@ namespace ConstellationEditor {
                 UnityEngine.GUI.Label (SelectionDisplay, "", UnityEngine.GUI.skin.GetStyle ("grey_border"));
         }
 
-        public void DragSelection () {
+        private void ClearSelectionArea() {
+            DragSize = Vector2.zero;
+            StartMousePosition = Vector2.zero;
+            DragSize = Vector2.zero;
+        }
 
-            if (SelectedNodes.Count < 2)
-                return;
-
-            NodeView draggedNode = null;
-            foreach (var node in SelectedNodes) {
-                if (node.IsDragged ()) {
-                    draggedNode = node;
-                    break;
+        private void DragSelectedNodes () {
+            if (SelectedNodes.Count > 1) {
+                var draggedNode = GetDraggedNode();
+                if(draggedNode != null) {
+                    foreach (var node in SelectedNodes) {
+                        if (node != draggedNode) {
+                            node.DragNode (draggedNode.DragVector ());
+                            node.ClearDrag ();
+                        }
+                    }
+                    draggedNode.ClearDrag ();
                 }
             }
-            if (draggedNode == null)
-                return;
-            foreach (var node in SelectedNodes) {
-                if (node != draggedNode) {
-                    node.DragNode (draggedNode.DragVector ());
-                    node.ClearDrag ();
+        }
+
+        private NodeView GetDraggedNode() {
+            foreach(var node in SelectedNodes) {
+                if(node.IsDragged()) {
+                    return node;
                 }
             }
-
-            draggedNode.ClearDrag ();
+            return null;
         }
 
         public void UnselectAll () {
