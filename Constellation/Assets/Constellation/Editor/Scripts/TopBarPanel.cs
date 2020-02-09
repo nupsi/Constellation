@@ -23,7 +23,7 @@ namespace ConstellationEditor {
                     menu.AddItem(new GUIContent("Undo: Ctrl+Alt+Z"), false, OnUndo, undoable);
                     menu.AddItem(new GUIContent("Redo: Ctrl+Alt+Y"), false, OnRedo, undoable);
                     menu.AddItem(new GUIContent("Copy: Ctrl+Alt+C"), false, Copy, copyable);
-                    menu.AddItem(new GUIContent("Past: Ctrl+Alt+V"), false, Paste, copyable);
+                    menu.AddItem(new GUIContent("Paste: Ctrl+Alt+V"), false, Paste, copyable);
                     menu.ShowAsContext();
                     return true;
                 }

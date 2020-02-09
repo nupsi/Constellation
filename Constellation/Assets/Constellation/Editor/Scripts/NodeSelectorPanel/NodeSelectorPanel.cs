@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace ConstellationEditor {
     public class NodeSelectorPanel {
-        Vector2 nodeSelectorScrollPos;
+        Vector2 scrollPosition;
         public delegate void NodeAdded (string nodeName, string _namespace);
         NodeAdded OnNodeAdded;
         string searchString = "";
@@ -38,11 +38,12 @@ namespace ConstellationEditor {
         }
 
         public void Draw (float _width, float _height) {
-            GUILayout.BeginVertical ();
+            GUILayout.BeginVertical (GUILayout.Width(_width));
             DrawSearchField ();
-            nodeSelectorScrollPos = EditorGUILayout.BeginScrollView (nodeSelectorScrollPos, GUILayout.Width (_width), GUILayout.Height (_height));
+            scrollPosition = EditorGUILayout.BeginScrollView (scrollPosition, GUILayout.Width (_width), GUILayout.Height (_height));
             foreach (NodeNamespacesData nodeNamespace in NodeNamespaceData) {
-                GUILayout.Label (nodeNamespace.namespaceName, GUI.skin.GetStyle ("OL Title"), GUILayout.Width(_width - 20));
+                EditorGUILayout.LabelField(nodeNamespace.namespaceName, GUI.skin.GetStyle("OL Title"));
+                GUILayout.Space(4);
                 var selGridInt = GUILayout.SelectionGrid (-1, nodeNamespace.GetNiceNames (), 1 + (int)Mathf.Floor(_width / 255));
                 if (selGridInt >= 0) {
                     OnNodeAdded (nodeNamespace.GetNames () [selGridInt], nodeNamespace.namespaceName);
@@ -53,7 +54,7 @@ namespace ConstellationEditor {
         }
 
         private void ClearSerachField () {
-            searchString = "";
+            searchString = string.Empty;
             FilterNodes (searchString);
         }
 
