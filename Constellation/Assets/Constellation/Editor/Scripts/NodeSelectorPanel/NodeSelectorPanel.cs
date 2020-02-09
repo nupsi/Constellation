@@ -5,10 +5,10 @@ using UnityEngine;
 
 namespace ConstellationEditor {
     public class NodeSelectorPanel {
+        SearchBar searchBar;
         Vector2 scrollPosition;
         public delegate void NodeAdded (string nodeName, string _namespace);
         NodeAdded OnNodeAdded;
-        string searchString = "";
         private List<NodeNamespacesData> NodeNamespaceData;
         private string[] namespaces;
 
@@ -18,6 +18,7 @@ namespace ConstellationEditor {
             var nodes = new List<string> (NodesFactory.GetAllNodes ());
             namespaces = NodesFactory.GetAllNamespaces (nodes.ToArray());
             NodeNamespaceData = new List<NodeNamespacesData> ();
+            searchBar = new SearchBar(FilterNodes);
 
             foreach (var _namespace in namespaces)
             {
@@ -37,45 +38,20 @@ namespace ConstellationEditor {
             }
         }
 
-        public void Draw (float _width, float _height) {
-            GUILayout.BeginVertical (GUILayout.Width(_width));
-            DrawSearchField ();
-            scrollPosition = EditorGUILayout.BeginScrollView (scrollPosition, GUILayout.Width (_width), GUILayout.Height (_height));
+        public void Draw (Rect _rect) {
+            GUILayout.BeginVertical (GUILayout.Width(_rect.width + 5));
+            searchBar.DrawSearchBar();
+            scrollPosition = EditorGUILayout.BeginScrollView (scrollPosition);
             foreach (NodeNamespacesData nodeNamespace in NodeNamespaceData) {
                 EditorGUILayout.LabelField(nodeNamespace.namespaceName, GUI.skin.GetStyle("OL Title"));
                 GUILayout.Space(4);
-                var selGridInt = GUILayout.SelectionGrid (-1, nodeNamespace.GetNiceNames (), 1 + (int)Mathf.Floor(_width / 255));
+                var selGridInt = GUILayout.SelectionGrid (-1, nodeNamespace.GetNiceNames (), 1 + (int)Mathf.Floor(_rect.width / 255));
                 if (selGridInt >= 0) {
                     OnNodeAdded (nodeNamespace.GetNames () [selGridInt], nodeNamespace.namespaceName);
                 }
             }
             EditorGUILayout.EndScrollView ();
             GUILayout.EndVertical ();
-        }
-
-        private void ClearSerachField () {
-            searchString = string.Empty;
-            FilterNodes (searchString);
-        }
-
-        private void DrawSearchField () {
-            EditorGUIUtility.labelWidth = 0;
-            EditorGUIUtility.fieldWidth = 0;
-            GUILayout.BeginHorizontal (GUI.skin.FindStyle ("Toolbar"));
-            var newSearchString = searchString;
-            newSearchString = GUILayout.TextField (newSearchString, GUI.skin.FindStyle ("ToolbarSeachTextField"));
-
-            if (newSearchString != searchString) {
-                searchString = newSearchString;
-                FilterNodes (searchString);
-            }
-
-            if (GUILayout.Button ("", GUI.skin.FindStyle ("ToolbarSeachCancelButton"))) {
-                ClearSerachField ();
-                GUI.FocusControl (null);
-            }
-
-            GUILayout.EndHorizontal ();
         }
     }
 }

@@ -11,7 +11,6 @@ namespace ConstellationEditor
     {
         protected NodeEditorPanel nodeEditorPanel;
         protected ConstellationsTabPanel nodeTabPanel;
-        private float nodeSelectorWidth = 270;
         private NodeSelectorPanel nodeSelector;
         private string currentPath;
         public static ConstellationUnityWindow WindowInstance;
@@ -19,6 +18,7 @@ namespace ConstellationEditor
         protected bool requestSetup;
         protected bool requestCompilation;
         private int splitThickness = 5;
+        private VerticalSplitView splitView;
 
         [MenuItem("Window/Constellation Editor")]
         public static void ShowWindow () {
@@ -233,6 +233,12 @@ namespace ConstellationEditor
                 scriptDataService.ClearActions();
             }
             nodeSelector = new NodeSelectorPanel(OnNodeAddRequested, scriptDataService.GetAllCustomNodesNames());
+
+            splitView = new VerticalSplitView(
+                nodeEditorPanel.DrawNodeEditor,
+                nodeSelector.Draw,
+                RequestRepaint,
+                0.7f);
         }
 
         void OnGUI () {
@@ -275,7 +281,6 @@ namespace ConstellationEditor
             }
         }
 
-
         protected virtual void DrawStartGUI () {
             StartPanel.Draw(this);
             Recover();
@@ -286,7 +291,6 @@ namespace ConstellationEditor
         }
 
         protected virtual void DrawGUI () {
-            
             TopBarPanel.Draw(this, this, this, this);
             var constellationName = nodeTabPanel.Draw(scriptDataService.currentPath.ToArray(), CurrentEditedInstancesName);
             if (constellationName != null)
@@ -298,23 +302,8 @@ namespace ConstellationEditor
                 RequestSetup();
             }
 
-            EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.BeginVertical();
-            nodeEditorPanel.DrawNodeEditor(new Rect(0, 35, position.width - nodeSelectorWidth - splitThickness, position.height - 35));
-            EditorGUILayout.EndVertical();
-            DrawVerticalSplit();
-            nodeSelector.Draw(nodeSelectorWidth, position.height - 50);
-            EditorGUILayout.EndHorizontal();
+            splitView.Draw(new Rect(0, 35, position.width - 10, position.height - 32));
             RepaintIfRequested();
-        }
-
-        private void DrawVerticalSplit () {
-            var verticalSplit = new Rect(position.width - nodeSelectorWidth - splitThickness, 30, splitThickness, position.height - 30);
-            var newVertical = EditorUtils.VerticalSplit(verticalSplit);
-            if (newVertical != verticalSplit.x) {
-                NodeSelectorWidth -= verticalSplit.x - newVertical;
-                RequestRepaint();
-            }
         }
 
         static void OnPlayStateChanged (PlayModeStateChange state) {
@@ -383,18 +372,6 @@ namespace ConstellationEditor
         protected virtual void OnLostFocus () {
             EditorApplication.playModeStateChanged -= OnPlayStateChanged;
             EditorApplication.playModeStateChanged += OnPlayStateChanged;
-        }
-
-        private float NodeSelectorWidth {
-            get {
-                return nodeSelectorWidth;
-            }
-
-            set {
-                if(value > 137 + splitThickness && value < 590) {
-                    nodeSelectorWidth = value;
-                }
-            }
         }
 
         protected override void ShowError(ConstellationError constellationError, Exception exception = null)
