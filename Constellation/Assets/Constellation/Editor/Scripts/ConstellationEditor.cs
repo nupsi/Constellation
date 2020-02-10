@@ -3,32 +3,68 @@ using UnityEngine;
 
 namespace ConstellationEditor {
     public static class ConstellationEditor {
-        private static string editorPath = "";
+        /// <summary>
+        /// Local Editor Data path for Constellation.
+        /// </summary>
+        private const string EditorData = "Editor/EditorData/";
 
-        public static string GetEditorPath () {
-            return string.IsNullOrEmpty(editorPath) ? InitializeEditorPath() : editorPath;
+        /// <summary>
+        /// Local Editor Assets path for Constellation.
+        /// </summary>
+        private const string EditorAssets = "Editor/EditorAssets/";
+
+        /// <summary>
+        /// Constellation folder.
+        /// </summary>
+        private static string constellationFolder;
+
+        /// <summary>
+        /// Get Constellation Editor Data folder.
+        /// </summary>
+        /// <returns>Assets/.../Constellation/Editor/EditorData/</returns>
+        public static string GetEditorPath() {
+            return string.Format("{0}{1}", ConstellationFolder, EditorData);
         }
 
-        public static string GetEditorAssetPath () {
-            var path = string.IsNullOrEmpty(editorPath) ? InitializeEditorPath() : editorPath;
-            return path.Replace("EditorData", "EditorAssets");
+        /// <summary>
+        /// Get Constellation Editor Assets folder.
+        /// </summary>
+        /// <returns>Assets/.../Constellation/Editor/EditorAssets/</returns>
+        public static string GetEditorAssetPath() {
+            return string.Format("{0}{1}", ConstellationFolder, EditorAssets);
         }
 
-        public static string GetProjectPath ()
-        {
-            var directory = string.IsNullOrEmpty(editorPath) ? InitializeEditorPath() : editorPath;
-            directory = directory.Replace("/Editor/EditorData/", "/");
-            return directory;
-        } 
+        /// <summary>
+        /// Get Constellation folder.
+        /// </summary>
+        /// <returns>Asssets/.../Constellation/</returns>
+        public static string GetProjectPath() {
+            return ConstellationFolder;
+        }
 
-        private static string InitializeEditorPath () {
-            foreach (var directory in Directory.GetDirectories(Application.dataPath, "*", SearchOption.AllDirectories))
-                if (directory.EndsWith("Constellation\\Editor\\Scripts"))
-                    foreach (var file in Directory.GetFiles(directory))
-                        if (file.Replace(directory + "\\", "").Equals("ConstellationEditor.cs"))
-                            return editorPath = directory.Replace(Application.dataPath, "Assets").Replace('\\', '/').Replace("Scripts", "EditorData") + "/";
-            Debug.Log("Error finding Constellation Editor folder");                
+        /// <summary>
+        /// Returns a local path to the firs folder named "Constellation" in the current project.
+        /// </summary>
+        /// <returns>Local path to Constellation folder.</returns>
+        private static string FindConstellationFolder() {
+            var directories = Directory.GetDirectories(Application.dataPath, "Constellation", SearchOption.AllDirectories);
+            if(directories.Length > 0) {
+                if(directories.Length > 1) {
+                    Debug.LogWarning("Found multiple folders named \"Constellation\". Using the first found folder: " + directories[0]);
+                }
+                return directories[0].Replace(Application.dataPath, "Assets") + "/";
+            }
+            Debug.LogError("Unable to find \"Constellation\" folder");
             return null;
+        }
+
+        /// <summary>
+        /// Constellation folder.
+        /// </summary>
+        private static string ConstellationFolder {
+            get {
+                return constellationFolder ?? (constellationFolder = FindConstellationFolder());
+            }
         }
     }
 }
