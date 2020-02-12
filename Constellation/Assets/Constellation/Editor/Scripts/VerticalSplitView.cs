@@ -1,5 +1,4 @@
-﻿using System;
-using UnityEditor;
+﻿using UnityEditor;
 using UnityEngine;
 
 namespace ConstellationEditor {
@@ -8,19 +7,19 @@ namespace ConstellationEditor {
 
         private DrawView leftView;
         private DrawView rightView;
-        private Action repaintWindow;
 
+        private IGUI window;
         private GUIStyle splitStyle;
         private Vector2 limits = new Vector2(0.1f, 0.9f);
         private float split;
         private bool dragging;
         private int thickness = 5;
 
-        public VerticalSplitView(DrawView left, DrawView right, Action repaint, float split) {
+        public VerticalSplitView(IGUI gui, DrawView left, DrawView right, float split) {
+            window = gui;
             Split = split;
             leftView = left;
             rightView = right;
-            repaintWindow = repaint;
         }
 
         public void Draw(Rect view) {
@@ -57,12 +56,12 @@ namespace ConstellationEditor {
                 if(dragging) {
                     if(current.rawType == EventType.MouseUp) {
                         dragging = false;
-                        repaintWindow.Invoke();
+                        window.RequestRepaint();
                     }
 
                     if(current.rawType == EventType.MouseDrag) {
                         Split = (current.mousePosition.x - parent.x) / parent.width;
-                        repaintWindow.Invoke();
+                        window.RequestRepaint();
                     }
                 }
             }

@@ -234,10 +234,9 @@ namespace ConstellationEditor
             }
             nodeSelector = new NodeSelectorPanel(OnNodeAddRequested, scriptDataService.GetAllCustomNodesNames());
 
-            splitView = new VerticalSplitView(
+            splitView = new VerticalSplitView(this,
                 nodeEditorPanel.DrawNodeEditor,
                 nodeSelector.Draw,
-                RequestRepaint,
                 0.7f);
         }
 
